@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quicker Banking</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --purple: #6d28d9;
+      --purple-dark: #4c1d95;
+      --purple-mid: #7c3aed;
+      --purple-light: #ede9fe;
+      --purple-xlight: #f5f3ff;
+      --white: #ffffff;
+      --bg: #f7f6fb;
+      --text: #1e1b2e;
+      --subtext: #6b7280;
+      --border: #e5e7eb;
+      --green: #059669;
+      --red: #dc2626;
+      --card-shadow: 0 2px 12px rgba(109,40,217,0.08);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ═══════════════ PAGES ═══════════════ */
+    .page {
+      display: none;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+    .page.active { display: block; }
+
+    /* ═══════════════ TOP BAR ═══════════════ */
+    .topbar {
+      background: var(--white);
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .topbar-logo {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--purple);
+      letter-spacing: -0.5px;
+    }
+    .topbar-logo span { color: var(--text); }
+    .topbar-right { display: flex; align-items: center; gap: 14px; }
+    .topbar-right i { font-size: 18px; color: var(--subtext); cursor: pointer; }
+    .avatar-small {
+      width: 34px; height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--purple), var(--purple-mid));
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 14px;
+    }
+
+    /* ═══════════════ BOTTOM NAV ═══════════════ */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 20px;
+      z-index: 100;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    }
+    .nav-item {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      cursor: pointer;
+      color: var(--subtext);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 12px;
+      transition: all 0.2s;
+      background: none; border: none;
+    }
+    .nav-item i { font-size: 20px; }
+    .nav-item.active { color: var(--purple); }
+    .nav-item.active i { color: var(--purple); }
+
+    /* ═══════════════ HOME PAGE ═══════════════ */
+    .home-header {
+      background: linear-gradient(160deg, var(--purple-dark) 0%, var(--purple-mid) 100%);
+      padding: 24px 20px 40px;
+      color: white;
+    }
+    .home-greeting { font-size: 14px; opacity: 0.85; margin-bottom: 4px; }
+    .home-name { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+    .balance-card {
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 20px;
+    }
+    .balance-label { font-size: 12px; opacity: 0.8; margin-bottom: 6px; }
+    .balance-amount { font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+    .balance-sub { font-size: 12px; opacity: 0.7; margin-top: 4px; }
+    .balance-row {
+      display: flex; gap: 12px; margin-top: 16px;
+    }
+    .balance-mini {
+      flex: 1;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 12px;
+    }
+    .balance-mini .lbl { font-size: 11px; opacity: 0.75; margin-bottom: 4px; }
+    .balance-mini .val { font-size: 16px; font-weight: 700; }
+
+    .home-body { padding: 20px; margin-top: -16px; }
+
+    /* QUICK SEND */
+    .section-label {
+      font-size: 13px; font-weight: 700;
+      color: var(--subtext);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .contacts-row {
+      display: flex; gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      margin-bottom: 24px;
+      scrollbar-width: none;
+    }
+    .contacts-row::-webkit-scrollbar { display: none; }
+    .contact-item {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 6px;
+      cursor: pointer; flex-shrink: 0;
+    }
+    .contact-avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 18px; color: white;
+    }
+    .contact-name { font-size: 11px; color: var(--subtext); text-align: center; }
+    .contact-add {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--purple-light);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .contact-add i { color: var(--purple); font-size: 20px; }
+
+    /* QUICK ACTIONS */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .quick-btn {
+      background: var(--white);
+      border-radius: 16px;
+      padding: 14px 8px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 8px;
+      cursor: pointer;
+      box-shadow: var(--card-shadow);
+      border: none;
+    }
+    .quick-btn .icon-wrap {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--purple-light);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .quick-btn i { color: var(--purple); font-size: 18px; }
+    .quick-btn span { font-size: 11px; font-weight: 600; color: var(--text); }
+
+    /* TRANSACTIONS */
+    .txn-card {
+      background: var(--white);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 16px;
+    }
+    .txn-header {
+      padding: 16px 16px 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .txn-header span { font-size: 12px; color: var(--purple); font-weight: 600; cursor: pointer; }
+    .txn-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .txn-item:hover { background: var(--bg); }
+    .txn-icon-wrap {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      background: var(--purple-light);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .txn-icon-wrap i { color: var(--purple); font-size: 16px; }
+    .txn-info { flex: 1; }
+    .txn-info .name { font-size: 14px; font-weight: 600; }
+    .txn-info .date { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+    .txn-amt { font-size: 15px; font-weight: 700; }
+    .txn-amt.debit { color: var(--red); }
+    .txn-amt.credit { color: var(--green); }
+
+    /* ═══════════════ SEND PAGE ═══════════════ */
+    .page-header {
+      background: var(--white);
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-title { font-size: 20px; font-weight: 800; color: var(--text); }
+    .page-sub { font-size: 13px; color: var(--subtext); margin-top: 2px; }
+
+    .send-body { padding: 20px; }
+
+    .search-bar {
+      display: flex; align-items: center;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .search-bar i { color: var(--subtext); font-size: 16px; }
+    .search-bar input {
+      border: none; outline: none;
+      font-size: 15px; background: transparent;
+      width: 100%; color: var(--text);
+    }
+
+    .send-contacts-label { font-size: 13px; font-weight: 700; color: var(--subtext); margin-bottom: 12px; }
+    .send-contact-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 24px; }
+    .send-contact-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 16px;
+      background: var(--white);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 2px solid transparent;
+    }
+    .send-contact-item:hover { border-color: var(--purple); }
+    .send-contact-item.selected { border-color: var(--purple); background: var(--purple-xlight); }
+    .send-contact-item .c-avatar {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 17px; color: white; flex-shrink: 0;
+    }
+    .send-contact-item .c-info .c-name { font-size: 15px; font-weight: 600; }
+    .send-contact-item .c-info .c-bank { font-size: 12px; color: var(--subtext); }
+    .send-contact-item .c-check { margin-left: auto; color: var(--purple); display: none; }
+    .send-contact-item.selected .c-check { display: block; }
+
+    .amount-box {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+    }
+    .amount-box .amount-label { font-size: 13px; color: var(--subtext); margin-bottom: 12px; }
+    .amount-display {
+      font-size: 48px; font-weight: 800;
+      color: var(--purple-dark);
+      letter-spacing: -2px;
+      min-height: 60px;
+    }
+    .amount-display .cursor { animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .numpad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .num-key {
+      background: var(--white);
+      border: none;
+      border-radius: 14px;
+      padding: 18px;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      box-shadow: var(--card-shadow);
+      transition: all 0.1s;
+    }
+    .num-key:active { transform: scale(0.95); background: var(--purple-light); }
+    .num-key.del { color: var(--purple); }
+    .num-key.empty { background: transparent; box-shadow: none; cursor: default; }
+
+    .note-input {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--white);
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+    }
+    .note-input i { color: var(--subtext); }
+    .note-input input {
+      border: none; outline: none; font-size: 14px;
+      background: transparent; width: 100%;
+    }
+
+    .btn-primary {
+      width: 100%;
+      background: linear-gradient(135deg, var(--purple-dark), var(--purple-mid));
+      color: white;
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary:not(:disabled):active { opacity: 0.85; }
+
+    /* ═══════════════ REQUEST PAGE ═══════════════ */
+    .request-body { padding: 20px; }
+    .request-tabs {
+      display: flex; gap: 8px; margin-bottom: 20px;
+    }
+    .req-tab {
+      flex: 1; padding: 10px;
+      border-radius: 12px;
+      border: 2px solid var(--border);
+      background: white;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; text-align: center;
+      color: var(--subtext);
+    }
+    .req-tab.active { border-color: var(--purple); color: var(--purple); background: var(--purple-xlight); }
+
+    /* ═══════════════ ACTIVITY PAGE ═══════════════ */
+    .activity-body { padding: 20px; }
+    .filter-row {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .filter-row::-webkit-scrollbar { display: none; }
+    .filter-pill {
+      padding: 8px 16px;
+      border-radius: 20px;
+      border: 1.5px solid var(--border);
+      background: white;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      color: var(--subtext);
+    }
+    .filter-pill.active { border-color: var(--purple); color: var(--purple); background: var(--purple-xlight); }
+
+    .activity-month { font-size: 12px; font-weight: 700; color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px; margin: 16px 0 8px; }
+
+    .activity-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
+      box-shadow: var(--card-shadow);
+    }
+    .act-icon {
+      width: 46px; height: 46px; border-radius: 14px;
+      background: var(--purple-light);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .act-icon i { color: var(--purple); font-size: 18px; }
+    .act-info { flex: 1; }
+    .act-info .act-name { font-size: 15px; font-weight: 600; }
+    .act-info .act-detail { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+    .act-right { text-align: right; }
+    .act-right .act-amt { font-size: 16px; font-weight: 700; }
+    .act-right .act-amt.debit { color: var(--red); }
+    .act-right .act-amt.credit { color: var(--green); }
+    .act-right .act-status {
+      font-size: 11px; margin-top: 3px;
+      padding: 2px 8px; border-radius: 8px; display: inline-block;
+    }
+    .act-status.completed { background: #d1fae5; color: #065f46; }
+    .act-status.pending { background: #fef3c7; color: #92400e; }
+
+    /* ═══════════════ PROFILE PAGE ═══════════════ */
+    .profile-header {
+      background: linear-gradient(160deg, var(--purple-dark), var(--purple-mid));
+      padding: 40px 20px 60px;
+      text-align: center;
+      color: white;
+    }
+    .profile-avatar {
+      width: 84px; height: 84px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 3px solid rgba(255,255,255,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px; font-weight: 800;
+      margin: 0 auto 14px;
+      color: white;
+    }
+    .profile-name { font-size: 22px; font-weight: 800; }
+    .profile-email { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+    .profile-tag {
+      margin-top: 10px;
+      background: rgba(255,255,255,0.15);
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    .profile-body { padding: 20px; margin-top: -28px; }
+    .profile-card {
+      background: var(--white);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: var(--card-shadow);
+      margin-bottom: 16px;
+    }
+    .profile-card-title {
+      padding: 16px 20px 8px;
+      font-size: 12px; font-weight: 700;
+      color: var(--subtext); text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .profile-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .profile-row:hover { background: var(--bg); }
+    .profile-row .pr-icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      background: var(--purple-light);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .profile-row .pr-icon i { color: var(--purple); font-size: 15px; }
+    .profile-row .pr-label { flex: 1; font-size: 15px; font-weight: 500; }
+    .profile-row .pr-value { font-size: 13px; color: var(--subtext); }
+    .profile-row i.arrow { color: var(--subtext); font-size: 13px; }
+
+    .logout-btn {
+      width: 100%;
+      background: #fef2f2;
+      color: var(--red);
+      border: none;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 8px;
+    }
+
+    /* ═══════════════ MODAL ═══════════════ */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 200;
+      align-items: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet {
+      background: var(--white);
+      border-radius: 24px 24px 0 0;
+      padding: 24px 20px 40px;
+      width: 100%;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+    .modal-handle {
+      width: 40px; height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+    .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+    .modal-sub { font-size: 13px; color: var(--subtext); margin-bottom: 20px; }
+
+    /* SUCCESS STATE */
+    .success-wrap {
+      text-align: center; padding: 20px 0;
+    }
+    .success-icon {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: #d1fae5;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+    }
+    .success-icon i { color: var(--green); font-size: 36px; }
+    .success-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: var(--subtext); margin-bottom: 24px; }
+
+    /* ═══════════════ DESKTOP ═══════════════ */
+    @media (min-width: 1024px) {
+      body { display: flex; }
+
+      .desktop-sidebar {
+        width: 260px; height: 100vh;
+        position: fixed; top: 0; left: 0;
+        background: var(--purple-dark);
+        display: flex; flex-direction: column;
+        padding: 32px 0;
+        z-index: 100;
+      }
+      .ds-logo {
+        font-size: 22px; font-weight: 800;
+        color: white; padding: 0 28px 28px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        margin-bottom: 16px;
+      }
+      .ds-logo span { color: rgba(255,255,255,0.5); }
+      .ds-nav a {
+        display: flex; align-items: center; gap: 14px;
+        padding: 13px 28px;
+        color: rgba(255,255,255,0.65);
+        text-decoration: none; font-size: 14px; font-weight: 500;
+        cursor: pointer; transition: all 0.15s;
+        border: none; background: none; width: 100%; text-align: left;
+      }
+      .ds-nav a:hover { color: white; background: rgba(255,255,255,0.08); }
+      .ds-nav a.active { color: white; background: rgba(255,255,255,0.15); }
+      .ds-nav a i { width: 20px; text-align: center; font-size: 16px; }
+      .ds-bottom {
+        margin-top: auto; padding: 20px 28px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex; align-items: center; gap: 12px;
+        color: rgba(255,255,255,0.7); font-size: 13px;
+      }
+      .ds-bottom .ds-av {
+        width: 36px; height: 36px; border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; color: white;
+      }
+
+      .app-wrapper {
+        margin-left: 260px;
+        width: calc(100% - 260px);
+        min-height: 100vh;
+      }
+
+      .bottom-nav { display: none; }
+      .topbar { padding: 16px 32px; }
+
+      .page { padding-bottom: 0; }
+
+      .home-body { padding: 32px; }
+      .send-body, .request-body, .activity-body, .profile-body { padding: 32px; max-width: 700px; }
+
+      .quick-grid { grid-template-columns: repeat(5, 1fr); }
+
+      .home-header { padding: 32px 32px 48px; }
+      .balance-row { gap: 16px; }
+
+      /* two-col layout on desktop home */
+      .home-desktop-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 28px;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .quick-grid { grid-template-columns: repeat(5, 1fr); }
+      .numpad { max-width: 400px; margin-left: auto; margin-right: auto; }
+    }
+
+    .desktop-sidebar { display: none; }
+    .app-wrapper { width: 100%; }
+
+    @media (min-width: 1024px) {
+      .desktop-sidebar { display: flex; }
+    }
+
+    /* ═══════════════ SPENDING SIDEBAR (desktop) ═══════════════ */
+    .spending-panel {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+    }
+    .spend-row {
+      display: flex; align-items: center;
+      margin-bottom: 14px; gap: 10px;
+    }
+    .spend-label { font-size: 13px; color: var(--subtext); width: 80px; }
+    .spend-track {
+      flex: 1; height: 8px; border-radius: 4px;
+      background: var(--purple-light);
+    }
+    .spend-fill { height: 8px; border-radius: 4px; }
+    .spend-val { font-size: 13px; font-weight: 700; width: 48px; text-align: right; }
+
+    .alert-panel {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      margin-top: 16px;
+    }
+    .alert-row {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px; color: var(--subtext);
+    }
+    .alert-row:last-child { border-bottom: none; }
+    .alert-row i { margin-top: 1px; }
+  </style>
+</head>
+<body>
+
+<!-- DESKTOP SIDEBAR -->
+<div class="desktop-sidebar">
+  <div class="ds-logo">Quicker<span>Bank</span></div>
+  <div class="ds-nav">
+    <a class="active" onclick="showPage('home',this)"><i class="fa-solid fa-house"></i> Dashboard</a>
+    <a onclick="showPage('send',this)"><i class="fa-solid fa-paper-plane"></i> Send Money</a>
+    <a onclick="showPage('request',this)"><i class="fa-solid fa-hand-holding-dollar"></i> Request</a>
+    <a onclick="showPage('activity',this)"><i class="fa-solid fa-clock-rotate-left"></i> Activity</a>
+    <a onclick="showPage('profile',this)"><i class="fa-solid fa-circle-user"></i> Profile</a>
+  </div>
+  <div class="ds-bottom">
+    <div class="ds-av">J</div>
+    <div>John Doe<br><small style="opacity:0.6">Premium</small></div>
+  </div>
+</div>
+
+<div class="app-wrapper">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-logo">Quicker<span>Bank</span></div>
+    <div class="topbar-right">
+      <i class="fa-solid fa-bell"></i>
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <div class="avatar-small">J</div>
+    </div>
+  </div>
+
+  <!-- ═══ HOME PAGE ═══ -->
+  <div class="page active" id="page-home">
+    <div class="home-header">
+      <div class="home-greeting">Good morning,</div>
+      <div class="home-name">John Doe</div>
+      <div class="balance-card">
+        <div class="balance-label">Total Balance</div>
+        <div class="balance-amount">$16,825.62</div>
+        <div class="balance-sub">Across all accounts</div>
+        <div class="balance-row">
+          <div class="balance-mini">
+            <div class="lbl">Checking</div>
+            <div class="val">$4,285.62</div>
+          </div>
+          <div class="balance-mini">
+            <div class="lbl">Savings</div>
+            <div class="val">$12,540.00</div>
+          </div>
+          <div class="balance-mini">
+            <div class="lbl">Credit</div>
+            <div class="val">-$1,204</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-body">
+      <div class="home-desktop-grid">
+        <div>
+          <!-- QUICK SEND -->
+          <div class="section-label">Quick Send</div>
+          <div class="contacts-row">
+            <div class="contact-add" onclick="showPage('send')">
+              <i class="fa-solid fa-plus"></i>
+            </div>
+            <div class="contact-item" onclick="quickSend('Maria L.')">
+              <div class="contact-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">M</div>
+              <div class="contact-name">Maria L.</div>
+            </div>
+            <div class="contact-item" onclick="quickSend('David K.')">
+              <div class="contact-avatar" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">D</div>
+              <div class="contact-name">David K.</div>
+            </div>
+            <div class="contact-item" onclick="quickSend('Sarah M.')">
+              <div class="contact-avatar" style="background:linear-gradient(135deg,#059669,#10b981)">S</div>
+              <div class="contact-name">Sarah M.</div>
+            </div>
+            <div class="contact-item" onclick="quickSend('Tom B.')">
+              <div class="contact-avatar" style="background:linear-gradient(135deg,#dc2626,#f87171)">T</div>
+              <div class="contact-name">Tom B.</div>
+            </div>
+            <div class="contact-item" onclick="quickSend('Alex R.')">
+              <div class="contact-avatar" style="background:linear-gradient(135deg,#d97706,#fbbf24)">A</div>
+              <div class="contact-name">Alex R.</div>
+            </div>
+          </div>
+
+          <!-- QUICK ACTIONS -->
+          <div class="section-label">Actions</div>
+          <div class="quick-grid">
+            <button class="quick-btn" onclick="showPage('send')">
+              <div class="icon-wrap"><i class="fa-solid fa-paper-plane"></i></div>
+              <span>Send</span>
+            </button>
+            <button class="quick-btn" onclick="showPage('request')">
+              <div class="icon-wrap"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+              <span>Request</span>
+            </button>
+            <button class="quick-btn" onclick="showDeposit()">
+              <div class="icon-wrap"><i class="fa-solid fa-mobile-screen"></i></div>
+              <span>Deposit</span>
+            </button>
+            <button class="quick-btn" onclick="showPage('activity')">
+              <div class="icon-wrap"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              <span>Activity</span>
+            </button>
+          </div>
+
+          <!-- RECENT TRANSACTIONS -->
+          <div class="section-label">Recent</div>
+          <div class="txn-card">
+            <div class="txn-header">
+              <b style="font-size:15px">Transactions</b>
+              <span onclick="showPage('activity')">View All</span>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon-wrap"><i class="fa-solid fa-cart-shopping"></i></div>
+              <div class="txn-info"><div class="name">Walmart</div><div class="date">Jun 13</div></div>
+              <div class="txn-amt debit">-$84.21</div>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon-wrap"><i class="fa-solid fa-briefcase"></i></div>
+              <div class="txn-info"><div class="name">Payroll Deposit</div><div class="date">Jun 12</div></div>
+              <div class="txn-amt credit">+$2,400.00</div>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon-wrap"><i class="fa-solid fa-utensils"></i></div>
+              <div class="txn-info"><div class="name">McDonald's</div><div class="date">Jun 11</div></div>
+              <div class="txn-amt debit">-$12.49</div>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon-wrap"><i class="fa-solid fa-gas-pump"></i></div>
+              <div class="txn-info"><div class="name">Shell Gas</div><div class="date">Jun 10</div></div>
+              <div class="txn-amt debit">-$55.00</div>
+            </div>
+            <div class="txn-item">
+              <div class="txn-icon-wrap"><i class="fa-solid fa-tv"></i></div>
+              <div class="txn-info"><div class="name">Netflix</div><div class="date">Jun 9</div></div>
+              <div class="txn-amt debit">-$15.99</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESKTOP RIGHT PANEL -->
+        <div style="display:none" class="desktop-right-panel">
+          <div class="section-label">Monthly Spending</div>
+          <div class="spending-panel">
+            <div class="spend-row">
+              <span class="spend-label">Food</span>
+              <div class="spend-track"><div class="spend-fill" style="width:75%;background:var(--purple)"></div></div>
+              <span class="spend-val">$420</span>
+            </div>
+            <div class="spend-row">
+              <span class="spend-label">Transport</span>
+              <div class="spend-track"><div class="spend-fill" style="width:50%;background:#0891b2"></div></div>
+              <span class="spend-val">$280</span>
+            </div>
+            <div class="spend-row">
+              <span class="spend-label">Shopping</span>
+              <div class="spend-track"><div class="spend-fill" style="width:60%;background:#059669"></div></div>
+              <span class="spend-val">$340</span>
+            </div>
+            <div class="spend-row">
+              <span class="spend-label">Bills</span>
+              <div class="spend-track"><div class="spend-fill" style="width:40%;background:#dc2626"></div></div>
+              <span class="spend-val">$220</span>
+            </div>
+            <div class="spend-row">
+              <span class="spend-label">Streaming</span>
+              <div class="spend-track"><div class="spend-fill" style="width:20%;background:#d97706"></div></div>
+              <span class="spend-val">$46</span>
+            </div>
+          </div>
+          <div class="alert-panel">
+            <div class="section-label" style="margin-bottom:8px">Alerts</div>
+            <div class="alert-row"><i class="fa-solid fa-circle-exclamation" style="color:#dc2626"></i><span>Credit payment of <b>$150</b> due in 3 days.</span></div>
+            <div class="alert-row"><i class="fa-solid fa-circle-check" style="color:#059669"></i><span>Payroll deposit of <b>$2,400</b> received.</span></div>
+            <div class="alert-row"><i class="fa-solid fa-triangle-exclamation" style="color:#d97706"></i><span>Unusual activity detected — please verify.</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SEND PAGE ═══ -->
+  <div class="page" id="page-send">
+    <div class="page-header">
+      <div class="page-title">Send Money</div>
+      <div class="page-sub">Fast, secure transfers</div>
+    </div>
+    <div class="send-body">
+
+      <!-- Step 1: pick contact -->
+      <div id="send-step1">
+        <div class="search-bar">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search name, email, or phone..." id="contactSearch" oninput="filterContacts()">
+        </div>
+        <div class="send-contacts-label">Recent Contacts</div>
+        <div class="send-contact-list" id="contactList">
+          <div class="send-contact-item" onclick="selectContact(this,'Maria Lopez','Chase Bank')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">M</div>
+            <div class="c-info"><div class="c-name">Maria Lopez</div><div class="c-bank">Chase Bank</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="send-contact-item" onclick="selectContact(this,'David Kim','Bank of America')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">D</div>
+            <div class="c-info"><div class="c-name">David Kim</div><div class="c-bank">Bank of America</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="send-contact-item" onclick="selectContact(this,'Sarah Martinez','Wells Fargo')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#059669,#10b981)">S</div>
+            <div class="c-info"><div class="c-name">Sarah Martinez</div><div class="c-bank">Wells Fargo</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="send-contact-item" onclick="selectContact(this,'Tom Brown','Citibank')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#dc2626,#f87171)">T</div>
+            <div class="c-info"><div class="c-name">Tom Brown</div><div class="c-bank">Citibank</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="send-contact-item" onclick="selectContact(this,'Alex Rivera','TD Bank')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#d97706,#fbbf24)">A</div>
+            <div class="c-info"><div class="c-name">Alex Rivera</div><div class="c-bank">TD Bank</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+        </div>
+        <button class="btn-primary" id="nextToAmount" onclick="goToAmount()" disabled>Continue</button>
+      </div>
+
+      <!-- Step 2: enter amount -->
+      <div id="send-step2" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;cursor:pointer" onclick="backToContacts()">
+          <i class="fa-solid fa-arrow-left" style="color:var(--purple)"></i>
+          <span style="color:var(--purple);font-weight:600">Back</span>
+        </div>
+        <div class="amount-box">
+          <div class="amount-label">Sending to <b id="recipientName"></b></div>
+          <div class="amount-display" id="amountDisplay">$0</div>
+        </div>
+        <div class="numpad">
+          <button class="num-key" onclick="addDigit('1')">1</button>
+          <button class="num-key" onclick="addDigit('2')">2</button>
+          <button class="num-key" onclick="addDigit('3')">3</button>
+          <button class="num-key" onclick="addDigit('4')">4</button>
+          <button class="num-key" onclick="addDigit('5')">5</button>
+          <button class="num-key" onclick="addDigit('6')">6</button>
+          <button class="num-key" onclick="addDigit('7')">7</button>
+          <button class="num-key" onclick="addDigit('8')">8</button>
+          <button class="num-key" onclick="addDigit('9')">9</button>
+          <button class="num-key empty"></button>
+          <button class="num-key" onclick="addDigit('0')">0</button>
+          <button class="num-key del" onclick="delDigit()"><i class="fa-solid fa-delete-left"></i></button>
+        </div>
+        <div class="note-input">
+          <i class="fa-solid fa-comment"></i>
+          <input type="text" id="sendNote" placeholder="What's it for? (optional)">
+        </div>
+        <button class="btn-primary" id="sendBtn" onclick="confirmSend()" disabled>Send Money</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ REQUEST PAGE ═══ -->
+  <div class="page" id="page-request">
+    <div class="page-header">
+      <div class="page-title">Request Money</div>
+      <div class="page-sub">Ask friends to pay you back</div>
+    </div>
+    <div class="request-body">
+      <div class="request-tabs">
+        <div class="req-tab active" onclick="setReqTab(this,'single')">Single Request</div>
+        <div class="req-tab" onclick="setReqTab(this,'split')">Split Bill</div>
+      </div>
+
+      <!-- Single request -->
+      <div id="req-single">
+        <div class="search-bar" style="margin-bottom:16px">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="Search contact...">
+        </div>
+        <div class="send-contact-list">
+          <div class="send-contact-item" onclick="selectReqContact(this,'Maria Lopez')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">M</div>
+            <div class="c-info"><div class="c-name">Maria Lopez</div><div class="c-bank">Chase Bank</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="send-contact-item" onclick="selectReqContact(this,'David Kim')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">D</div>
+            <div class="c-info"><div class="c-name">David Kim</div><div class="c-bank">Bank of America</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+          <div class="send-contact-item" onclick="selectReqContact(this,'Sarah Martinez')">
+            <div class="c-avatar" style="background:linear-gradient(135deg,#059669,#10b981)">S</div>
+            <div class="c-info"><div class="c-name">Sarah Martinez</div><div class="c-bank">Wells Fargo</div></div>
+            <i class="fa-solid fa-circle-check c-check"></i>
+          </div>
+        </div>
+        <div class="amount-box" style="margin-top:16px">
+          <div class="amount-label">Request amount</div>
+          <div class="amount-display" id="reqAmountDisplay">$0</div>
+        </div>
+        <div class="numpad" style="margin-top:16px">
+          <button class="num-key" onclick="addReqDigit('1')">1</button>
+          <button class="num-key" onclick="addReqDigit('2')">2</button>
+          <button class="num-key" onclick="addReqDigit('3')">3</button>
+          <button class="num-key" onclick="addReqDigit('4')">4</button>
+          <button class="num-key" onclick="addReqDigit('5')">5</button>
+          <button class="num-key" onclick="addReqDigit('6')">6</button>
+          <button class="num-key" onclick="addReqDigit('7')">7</button>
+          <button class="num-key" onclick="addReqDigit('8')">8</button>
+          <button class="num-key" onclick="addReqDigit('9')">9</button>
+          <button class="num-key empty"></button>
+          <button class="num-key" onclick="addReqDigit('0')">0</button>
+          <button class="num-key del" onclick="delReqDigit()"><i class="fa-solid fa-delete-left"></i></button>
+        </div>
+        <div class="note-input">
+          <i class="fa-solid fa-comment"></i>
+          <input type="text" id="reqNote" placeholder="Reason for request...">
+        </div>
+        <button class="btn-primary" onclick="confirmRequest()">Request Money</button>
+      </div>
+
+      <!-- Split Bill -->
+      <div id="req-split" style="display:none">
+        <div style="background:var(--white);border-radius:20px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:16px">
+          <div class="section-label">Bill Total</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+            <span style="font-size:28px;font-weight:800;color:var(--purple-dark)">$</span>
+            <input type="number" id="billTotal" placeholder="0.00" style="border:none;outline:none;font-size:28px;font-weight:800;color:var(--text);width:100%;background:transparent">
+          </div>
+          <div class="note-input">
+            <i class="fa-solid fa-receipt"></i>
+            <input type="text" placeholder="Bill description (e.g. Dinner at Ruby's)">
+          </div>
+        </div>
+        <div style="background:var(--white);border-radius:20px;padding:20px;box-shadow:var(--card-shadow);margin-bottom:16px">
+          <div class="section-label">Split With</div>
+          <div id="splitPeople">
+            <div class="send-contact-item" onclick="toggleSplit(this,'Maria Lopez')">
+              <div class="c-avatar" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">M</div>
+              <div class="c-info"><div class="c-name">Maria Lopez</div></div>
+              <i class="fa-solid fa-circle-check c-check"></i>
+            </div>
+            <div class="send-contact-item" onclick="toggleSplit(this,'David Kim')">
+              <div class="c-avatar" style="background:linear-gradient(135deg,#0891b2,#06b6d4)">D</div>
+              <div class="c-info"><div class="c-name">David Kim</div></div>
+              <i class="fa-solid fa-circle-check c-check"></i>
+            </div>
+            <div class="send-contact-item" onclick="toggleSplit(this,'Sarah Martinez')">
+              <div class="c-avatar" style="background:linear-gradient(135deg,#059669,#10b981)">S</div>
+              <div class="c-info"><div class="c-name">Sarah Martinez</div></div>
+              <i class="fa-solid fa-circle-check c-check"></i>
+            </div>
+          </div>
+          <div id="splitResult" style="margin-top:16px;padding:14px;background:var(--purple-xlight);border-radius:12px;text-align:center;display:none">
+            <div style="font-size:13px;color:var(--subtext)">Each person owes</div>
+            <div style="font-size:28px;font-weight:800;color:var(--purple-dark)" id="splitAmount">$0</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="confirmSplit()">Send Split Requests</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ACTIVITY PAGE ═══ -->
+  <div class="page" id="page-activity">
+    <div class="page-header">
+      <div class="page-title">Activity</div>
+      <div class="page-sub">Your full transaction history</div>
+    </div>
+    <div class="activity-body">
+      <div class="filter-row">
+        <div class="filter-pill active" onclick="filterActivity(this,'all')">All</div>
+        <div class="filter-pill" onclick="filterActivity(this,'sent')">Sent</div>
+        <div class="filter-pill" onclick="filterActivity(this,'received')">Received</div>
+        <div class="filter-pill" onclick="filterActivity(this,'pending')">Pending</div>
+      </div>
+
+      <div class="activity-month">June 2026</div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-cart-shopping"></i></div>
+        <div class="act-info">
+          <div class="act-name">Walmart</div>
+          <div class="act-detail">Jun 13, 2026 · Checking ....3847</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt debit">-$84.21</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <div class="act-info">
+          <div class="act-name">Payroll Deposit</div>
+          <div class="act-detail">Jun 12, 2026 · Checking ....3847</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt credit">+$2,400.00</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="act-info">
+          <div class="act-name">Sent to Maria Lopez</div>
+          <div class="act-detail">Jun 11, 2026 · QuickerBank Transfer</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt debit">-$50.00</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-utensils"></i></div>
+        <div class="act-info">
+          <div class="act-name">McDonald's</div>
+          <div class="act-detail">Jun 11, 2026 · Credit ....5512</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt debit">-$12.49</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        <div class="act-info">
+          <div class="act-name">Received from David Kim</div>
+          <div class="act-detail">Jun 10, 2026 · QuickerBank Transfer</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt credit">+$120.00</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-gas-pump"></i></div>
+        <div class="act-info">
+          <div class="act-name">Shell Gas Station</div>
+          <div class="act-detail">Jun 10, 2026 · Checking ....3847</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt debit">-$55.00</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+
+      <div class="activity-month">May 2026</div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-tv"></i></div>
+        <div class="act-info">
+          <div class="act-name">Netflix</div>
+          <div class="act-detail">May 31, 2026 · Credit ....5512</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt debit">-$15.99</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-paper-plane"></i></div>
+        <div class="act-info">
+          <div class="act-name">Sent to Sarah Martinez</div>
+          <div class="act-detail">May 28, 2026 · Dinner split</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt debit">-$35.50</div>
+          <div class="act-status pending">Pending</div>
+        </div>
+      </div>
+      <div class="activity-item">
+        <div class="act-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <div class="act-info">
+          <div class="act-name">Payroll Deposit</div>
+          <div class="act-detail">May 26, 2026 · Checking ....3847</div>
+        </div>
+        <div class="act-right">
+          <div class="act-amt credit">+$2,400.00</div>
+          <div class="act-status completed">Completed</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROFILE PAGE ═══ -->
+  <div class="page" id="page-profile">
+    <div class="profile-header">
+      <div class="profile-avatar">J</div>
+      <div class="profile-name">John Doe</div>
+      <div class="profile-email">johndoe@email.com</div>
+      <div class="profile-tag">$JohnDoe</div>
+    </div>
+    <div class="profile-body">
+      <div class="profile-card">
+        <div class="profile-card-title">Account</div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-user"></i></div>
+          <span class="pr-label">Personal Info</span>
+          <span class="pr-value">John Doe</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-phone"></i></div>
+          <span class="pr-label">Phone</span>
+          <span class="pr-value">....7890</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-envelope"></i></div>
+          <span class="pr-label">Email</span>
+          <span class="pr-value">johndoe@...</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-building-columns"></i></div>
+          <span class="pr-label">Linked Banks</span>
+          <span class="pr-value">2 accounts</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-card-title">Security</div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-fingerprint"></i></div>
+          <span class="pr-label">Biometric Login</span>
+          <span class="pr-value" style="color:var(--green)">On</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-lock"></i></div>
+          <span class="pr-label">Change PIN</span>
+          <span class="pr-value"></span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-shield-halved"></i></div>
+          <span class="pr-label">Two-Factor Auth</span>
+          <span class="pr-value" style="color:var(--green)">On</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-card-title">Preferences</div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-bell"></i></div>
+          <span class="pr-label">Notifications</span>
+          <span class="pr-value" style="color:var(--green)">On</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-moon"></i></div>
+          <span class="pr-label">Dark Mode</span>
+          <span class="pr-value">Off</span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+        <div class="profile-row">
+          <div class="pr-icon"><i class="fa-solid fa-circle-question"></i></div>
+          <span class="pr-label">Help & Support</span>
+          <span class="pr-value"></span>
+          <i class="fa-solid fa-chevron-right arrow"></i>
+        </div>
+      </div>
+
+      <button class="logout-btn">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        Sign Out
+      </button>
+    </div>
+  </div>
+
+</div><!-- end app-wrapper -->
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="showPage('home',this)" id="nav-home">
+    <i class="fa-solid fa-house"></i>Home
+  </button>
+  <button class="nav-item" onclick="showPage('send',this)" id="nav-send">
+    <i class="fa-solid fa-paper-plane"></i>Send
+  </button>
+  <button class="nav-item" onclick="showPage('request',this)" id="nav-request">
+    <i class="fa-solid fa-hand-holding-dollar"></i>Request
+  </button>
+  <button class="nav-item" onclick="showPage('activity',this)" id="nav-activity">
+    <i class="fa-solid fa-clock-rotate-left"></i>Activity
+  </button>
+  <button class="nav-item" onclick="showPage('profile',this)" id="nav-profile">
+    <i class="fa-solid fa-circle-user"></i>Profile
+  </button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+  // ═══ PAGE NAVIGATION ═══
+  function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+
+    // bottom nav
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const navEl = el || document.getElementById('nav-' + name);
+    if (navEl && navEl.classList.contains('nav-item')) navEl.classList.add('active');
+
+    // desktop sidebar
+    document.querySelectorAll('.ds-nav a').forEach(a => a.classList.remove('active'));
+
+    window.scrollTo(0,0);
+  }
+
+  // ═══ SEND FLOW ═══
+  let selectedContact = null;
+  let sendAmount = '';
+  let reqAmount = '';
+
+  function selectContact(el, name, bank) {
+    document.querySelectorAll('#contactList .send-contact-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedContact = name;
+    document.getElementById('nextToAmount').disabled = false;
+  }
+
+  function filterContacts() {
+    const q = document.getElementById('contactSearch').value.toLowerCase();
+    document.querySelectorAll('#contactList .send-contact-item').forEach(item => {
+      const n = item.querySelector('.c-name').textContent.toLowerCase();
+      item.style.display = n.includes(q) ? '' : 'none';
+    });
+  }
+
+  function goToAmount() {
+    if (!selectedContact) return;
+    document.getElementById('send-step1').style.display = 'none';
+    document.getElementById('send-step2').style.display = 'block';
+    document.getElementById('recipientName').textContent = selectedContact;
+    sendAmount = '';
+    updateAmountDisplay();
+  }
+
+  function backToContacts() {
+    document.getElementById('send-step1').style.display = 'block';
+    document.getElementById('send-step2').style.display = 'none';
+  }
+
+  function addDigit(d) {
+    if (sendAmount.length >= 7) return;
+    sendAmount += d;
+    updateAmountDisplay();
+  }
+
+  function delDigit() {
+    sendAmount = sendAmount.slice(0, -1);
+    updateAmountDisplay();
+  }
+
+  function updateAmountDisplay() {
+    const val = sendAmount ? '$' + parseInt(sendAmount || '0').toLocaleString() : '$0';
+    document.getElementById('amountDisplay').textContent = val;
+    document.getElementById('sendBtn').disabled = !sendAmount || parseInt(sendAmount) === 0;
+  }
+
+  function confirmSend() {
+    const amt = '$' + parseInt(sendAmount).toLocaleString();
+    showModal(`
+      <div class="success-wrap">
+        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="success-title">Money Sent!</div>
+        <div class="success-sub">${amt} sent to <b>${selectedContact}</b> successfully.</div>
+        <button class="btn-primary" onclick="closeModal();showPage('home')">Back to Home</button>
+      </div>
+    `);
+    sendAmount = '';
+    selectedContact = null;
+    document.querySelectorAll('#contactList .send-contact-item').forEach(i => i.classList.remove('selected'));
+    document.getElementById('nextToAmount').disabled = true;
+  }
+
+  function quickSend(name) {
+    selectedContact = name;
+    showPage('send');
+    goToAmount();
+  }
+
+  // ═══ REQUEST FLOW ═══
+  let selectedReqContact = null;
+  let splitSelected = [];
+
+  function selectReqContact(el, name) {
+    document.querySelectorAll('#req-single .send-contact-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedReqContact = name;
+  }
+
+  function setReqTab(el, tab) {
+    document.querySelectorAll('.req-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('req-single').style.display = tab === 'single' ? 'block' : 'none';
+    document.getElementById('req-split').style.display = tab === 'split' ? 'block' : 'none';
+  }
+
+  function addReqDigit(d) {
+    if (reqAmount.length >= 7) return;
+    reqAmount += d;
+    document.getElementById('reqAmountDisplay').textContent = reqAmount ? '$' + parseInt(reqAmount).toLocaleString() : '$0';
+  }
+
+  function delReqDigit() {
+    reqAmount = reqAmount.slice(0, -1);
+    document.getElementById('reqAmountDisplay').textContent = reqAmount ? '$' + parseInt(reqAmount).toLocaleString() : '$0';
+  }
+
+  function confirmRequest() {
+    const amt = reqAmount ? '$' + parseInt(reqAmount).toLocaleString() : '$0';
+    const to = selectedReqContact || 'contact';
+    showModal(`
+      <div class="success-wrap">
+        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="success-title">Request Sent!</div>
+        <div class="success-sub">You requested <b>${amt}</b> from <b>${to}</b>.</div>
+        <button class="btn-primary" onclick="closeModal();showPage('home')">Back to Home</button>
+      </div>
+    `);
+  }
+
+  function toggleSplit(el, name) {
+    el.classList.toggle('selected');
+    if (el.classList.contains('selected')) {
+      if (!splitSelected.includes(name)) splitSelected.push(name);
+    } else {
+      splitSelected = splitSelected.filter(n => n !== name);
+    }
+    calcSplit();
+  }
+
+  function calcSplit() {
+    const total = parseFloat(document.getElementById('billTotal').value || 0);
+    const people = splitSelected.length + 1;
+    const each = total > 0 && people > 1 ? (total / people).toFixed(2) : 0;
+    const res = document.getElementById('splitResult');
+    if (each > 0) {
+      res.style.display = 'block';
+      document.getElementById('splitAmount').textContent = '$' + each;
+    } else {
+      res.style.display = 'none';
+    }
+  }
+
+  document.getElementById('billTotal').addEventListener('input', calcSplit);
+
+  function confirmSplit() {
+    if (splitSelected.length === 0) { alert('Select at least one person.'); return; }
+    showModal(`
+      <div class="success-wrap">
+        <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="success-title">Requests Sent!</div>
+        <div class="success-sub">Split requests sent to <b>${splitSelected.join(', ')}</b>.</div>
+        <button class="btn-primary" onclick="closeModal();showPage('home')">Back to Home</button>
+      </div>
+    `);
+  }
+
+  // ═══ ACTIVITY FILTER ═══
+  function filterActivity(el, filter) {
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // ═══ DEPOSIT MODAL ═══
+  function showDeposit() {
+    showModal(`
+      <div class="modal-title">Mobile Deposit</div>
+      <div class="modal-sub">Take a photo of your check front and back</div>
+      <div style="background:var(--purple-xlight);border:2px dashed var(--purple);border-radius:16px;padding:32px;text-align:center;margin-bottom:16px;cursor:pointer">
+        <i class="fa-solid fa-camera" style="font-size:36px;color:var(--purple);margin-bottom:10px;display:block"></i>
+        <div style="font-size:14px;color:var(--purple);font-weight:600">Tap to take photo</div>
+        <div style="font-size:12px;color:var(--subtext);margin-top:4px">Front of check</div>
+      </div>
+      <div style="background:var(--purple-xlight);border:2px dashed var(--purple);border-radius:16px;padding:32px;text-align:center;margin-bottom:20px;cursor:pointer">
+        <i class="fa-solid fa-camera" style="font-size:36px;color:var(--purple);margin-bottom:10px;display:block"></i>
+        <div style="font-size:14px;color:var(--purple);font-weight:600">Tap to take photo</div>
+        <div style="font-size:12px;color:var(--subtext);margin-top:4px">Back of check</div>
+      </div>
+      <div class="note-input" style="margin-bottom:16px">
+        <i class="fa-solid fa-dollar-sign" style="color:var(--subtext)"></i>
+        <input type="number" placeholder="Check amount">
+      </div>
+      <button class="btn-primary" onclick="closeModal()">Submit Deposit</button>
+    `);
+  }
+
+  // ═══ MODAL ═══
+  function showModal(html) {
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal').classList.add('open');
+  }
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+  }
+  document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // ═══ DESKTOP RIGHT PANEL ═══
+  if (window.innerWidth >= 1024) {
+    document.querySelector('.desktop-right-panel').style.display = 'block';
+  }
+  window.addEventListener('resize', () => {
+    const panel = document.querySelector('.desktop-right-panel');
+    if (panel) panel.style.display = window.innerWidth >= 1024 ? 'block' : 'none';
+  });
+</script>
+</body>
+</html>
+```
+
+<function_calls>
+<invoke name="present_files">
+<parameter name="filepaths">["/mnt/user-data/outputs/dashboard.html"]
